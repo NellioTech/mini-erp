@@ -1,0 +1,9 @@
+{
+  "name": "ERP 庫存管理系統",
+  "short_name": "ERP",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#1f4e79",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

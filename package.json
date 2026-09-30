@@ -1,0 +1,19 @@
+{
+  "name": "erp-pwa",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "node server.js",
+    "db": "node db/deploy.js",
+    "db:reset": "node db/deploy.js --reset",
+    "test": "node test/verify.js",
+    "seed": "node test/seed.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "ERP 庫存管理系統（PWA + SQL Server，T-SQL 驅動）",
+  "dependencies": {
+    "express": "^5.2.1",
+    "mssql": "^12.7.2"
+  }
+}
