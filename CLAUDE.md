@@ -39,5 +39,6 @@ npm start         # http://localhost:3000
 過帳 6 條累加一致；每日庫存餘額逐列 `期初+本期入庫-本期出庫=期末`；每日供需餘額逐列 `在手+供給入庫-需求入庫=可用`。改動邏輯後務必跑 `npm test`（有示範資料時）或 `npm run db:reset && npm run seed`。
 
 ## 工作流程
+- Repo：https://github.com/NellioTech/mini-erp（公開，勿提交 .env）；版本以 git tag `vX.Y.Z` 標記。
 - 每完成一個段落：更新 README.md / CLAUDE.md / SKILL.md / AGENT.md → commit → push 到 GitHub，並回報 repo 與 release 連結。
 - 新增功能的步驟見 `SKILL.md`。

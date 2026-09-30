@@ -1,5 +1,7 @@
 # ERP 庫存管理系統（PWA + SQL Server）
 
+Repo：https://github.com/NellioTech/mini-erp ・ 版本：[v0.1.0](https://github.com/NellioTech/mini-erp/releases/tag/v0.1.0)
+
 SD 訂單 / MM 採購 / IM 庫存 / PP 生產 四模組。
 設計原則：**極大化 SQL Server、極少化前端**——能用 T-SQL 物件解決的一律放在資料庫；
 Node 只轉呼叫 `api_*` 預存程序，前端只依 SQL 回傳的中繼資料產生畫面，並負責斷線重傳。
