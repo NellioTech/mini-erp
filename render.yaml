@@ -1,0 +1,22 @@
+# Render Blueprint：一鍵部署（README 的 Deploy to Render 按鈕）
+services:
+  - type: web
+    name: mini-erp
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20.20.0"
+      - key: DB_SERVER
+        value: 163.17.141.61
+      - key: DB_PORT
+        value: "8082"
+      - key: DB_NAME
+        value: oav-nt0813
+      - key: DB_USER
+        sync: false          # 部署時於 Render 畫面輸入
+      - key: DB_PASSWORD
+        sync: false          # 部署時於 Render 畫面輸入

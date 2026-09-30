@@ -2,6 +2,14 @@
 
 Repo：https://github.com/NellioTech/mini-erp ・ 版本：[v0.1.0](https://github.com/NellioTech/mini-erp/releases/tag/v0.1.0)
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/NellioTech/mini-erp)
+
+## 線上部署（Render）
+1. 點上方按鈕，以 GitHub 帳號登入 Render，選擇 `NellioTech/mini-erp`。
+2. 輸入 `DB_USER`、`DB_PASSWORD` 後按 Apply，約 2–3 分鐘完成，取得 `https://mini-erp-xxxx.onrender.com`。
+3. 之後每次 push 到 main 會自動重新部署。免費方案閒置 15 分鐘會休眠，下次開啟需等約 30 秒喚醒。
+4. ⚠ 目前沒有登入畫面，拿到網址的人都能讀寫資料庫。
+
 SD 訂單 / MM 採購 / IM 庫存 / PP 生產 四模組。
 設計原則：**極大化 SQL Server、極少化前端**——能用 T-SQL 物件解決的一律放在資料庫；
 Node 只轉呼叫 `api_*` 預存程序，前端只依 SQL 回傳的中繼資料產生畫面，並負責斷線重傳。
