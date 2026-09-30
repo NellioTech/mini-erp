@@ -13,8 +13,9 @@ function toast(msg, cls = '') {
 
 /* ---------- API ---------- */
 async function get(proc, params = {}) {
-  const r = await fetch(`${window.ERP_API || ''}/api/${proc}?` + new URLSearchParams(params));
-  const j = await r.json().catch(() => { throw new Error(`無法連線到後端 API（${window.ERP_API || location.origin}），請確認後端服務已啟動`); });
+  const down = () => { throw new Error(`無法連線到後端 API（${window.ERP_API || location.origin}），請確認後端服務已啟動`); };
+  const r = await fetch(`${window.ERP_API || ''}/api/${proc}?` + new URLSearchParams(params)).catch(down);
+  const j = await r.json().catch(down);
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
 }
