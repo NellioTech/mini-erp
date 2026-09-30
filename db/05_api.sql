@@ -98,7 +98,13 @@ BEGIN
         SELECT f.功能代碼, f.模組名稱, f.分類, f.功能名稱, f.類型, f.主檔, f.明細檔, f.明細唯讀, f.單號前綴,
                (SELECT 欄位名, 型別, 長度, 可空, 主鍵, 參照表, 唯讀 FROM 系統欄位 WHERE 表名 = f.主檔 ORDER BY 順序 FOR JSON PATH) AS 主檔欄位,
                (SELECT 欄位名, 型別, 長度, 可空, 主鍵, 參照表, 唯讀 FROM 系統欄位 WHERE 表名 = f.明細檔 ORDER BY 順序 FOR JSON PATH) AS 明細欄位,
-               (SELECT 參數名, 型別 FROM 系統參數 WHERE 表名 = f.主檔 ORDER BY 順序 FOR JSON PATH) AS 參數欄位
+               (SELECT 參數名, 型別 FROM 系統參數 WHERE 表名 = f.主檔 ORDER BY 順序 FOR JSON PATH) AS 參數欄位,
+               (SELECT l.層級, l.來源, l.標題,
+                       (SELECT 欄位名, 型別 FROM 系統欄位 WHERE 表名 = l.來源 ORDER BY 順序 FOR JSON PATH) AS 欄位
+                FROM 報表層級 l WHERE l.功能代碼 = f.功能代碼 ORDER BY l.層級 FOR JSON PATH) AS 層級,
+               JSON_QUERY((SELECT r.來源, r.標題,
+                       (SELECT 欄位名, 型別 FROM 系統欄位 WHERE 表名 = r.來源 ORDER BY 順序 FOR JSON PATH) AS 欄位
+                FROM 明細參照 r WHERE r.功能代碼 = f.功能代碼 FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)) AS 參照
         FROM 功能表 f WHERE f.功能代碼 = @功能代碼
         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
     ) AS json;
@@ -241,5 +247,47 @@ BEGIN
         EXEC sp_錯誤轉譯;
     END CATCH
     SELECT @結果 AS json;
+END
+GO
+
+/* 報表多層鑽取：@上層 為上一層被點選的整列（JSON），依 報表層級關聯 篩選本層 */
+CREATE OR ALTER PROCEDURE api_鑽取 @功能代碼 nvarchar(20), @層級 int, @上層 nvarchar(max) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @來源 sysname, @排序 nvarchar(200), @where nvarchar(max), @sql nvarchar(max), @out nvarchar(max);
+    SELECT @來源 = 來源, @排序 = 排序 FROM 報表層級 WHERE 功能代碼 = @功能代碼 AND 層級 = @層級;
+    IF @來源 IS NULL THROW 50130, N'報表層級不存在', 1;
+    SELECT @where = STRING_AGG(CAST(QUOTENAME(k.本層欄位) + N' = TRY_CAST(JSON_VALUE(@上層, N''$."' + k.上層欄位 + N'"'') AS ' + c.SQL型別 + N')' AS nvarchar(max)), N' AND ')
+    FROM 報表層級關聯 k JOIN 系統欄位 c ON c.表名 = @來源 AND c.欄位名 = k.本層欄位
+    WHERE k.功能代碼 = @功能代碼 AND k.層級 = @層級;
+    SET @sql = N'SET @out = (SELECT TOP (1000) * FROM ' + QUOTENAME(@來源) + ISNULL(N' WHERE ' + @where, N'')
+             + N' ORDER BY ' + ISNULL(@排序, N'1') + N' FOR JSON PATH, INCLUDE_NULL_VALUES);';
+    EXEC sp_executesql @sql, N'@上層 nvarchar(max), @out nvarchar(max) OUTPUT', @上層, @out OUTPUT;
+    SELECT ISNULL(@out, N'[]') AS json;
+END
+GO
+
+/* 明細參照來源：以表頭已填的值篩選（如客戶編號），每列附 _帶入（明細欄位）與 _表頭（回填表頭） */
+CREATE OR ALTER PROCEDURE api_參照來源 @功能代碼 nvarchar(20), @表頭 nvarchar(max) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @來源 sysname, @where nvarchar(max), @明細 nvarchar(max), @頭 nvarchar(max), @sql nvarchar(max), @out nvarchar(max);
+    SELECT @來源 = 來源 FROM 明細參照 WHERE 功能代碼 = @功能代碼;
+    IF @來源 IS NULL THROW 50140, N'此功能沒有參照來源', 1;
+    SELECT @where = STRING_AGG(CAST(N'(JSON_VALUE(@表頭, N''$."' + 目標欄位 + N'"'') IS NULL OR s.' + QUOTENAME(來源欄位)
+                  + N' = JSON_VALUE(@表頭, N''$."' + 目標欄位 + N'"''))' AS nvarchar(max)), N' AND ')
+    FROM 明細參照欄位 WHERE 功能代碼 = @功能代碼 AND 位置 = N'表頭';
+    SELECT @明細 = STRING_AGG(CAST(N's.' + QUOTENAME(來源欄位) + N' AS ' + QUOTENAME(目標欄位) AS nvarchar(max)), N',')
+    FROM 明細參照欄位 WHERE 功能代碼 = @功能代碼 AND 位置 = N'明細';
+    SELECT @頭 = STRING_AGG(CAST(N's.' + QUOTENAME(來源欄位) + N' AS ' + QUOTENAME(目標欄位) AS nvarchar(max)), N',')
+    FROM 明細參照欄位 WHERE 功能代碼 = @功能代碼 AND 位置 = N'表頭';
+    SET @sql = N'SET @out = (SELECT TOP (500) s.*, JSON_QUERY((SELECT ' + @明細 + N' FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)) AS _帶入'
+             + ISNULL(N', JSON_QUERY((SELECT ' + @頭 + N' FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)) AS _表頭', N'')
+             + N' FROM ' + QUOTENAME(@來源) + N' s' + ISNULL(N' WHERE ' + @where, N'')
+             + N' ORDER BY 1, 2 FOR JSON PATH, INCLUDE_NULL_VALUES);';
+    EXEC sp_executesql @sql, N'@表頭 nvarchar(max), @out nvarchar(max) OUTPUT', @表頭, @out OUTPUT;
+    SELECT ISNULL(@out, N'[]') AS json;
 END
 GO

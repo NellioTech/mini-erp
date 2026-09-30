@@ -1,6 +1,39 @@
 /* ============================================================
-   04 功能表與欄位設定（前端選單完全由此產生）
+   04 功能設定（前端畫面完全由此產生）：功能表、唯讀欄位、報表多層鑽取、明細參照帶入
+   設定表於此建立（可重複執行），資料每次部署重建
    ============================================================ */
+IF OBJECT_ID(N'報表層級') IS NULL
+CREATE TABLE 報表層級 (             -- 報表多層鑽取：第 1 層起，點選列進入下一層
+    功能代碼 nvarchar(20)  NOT NULL,
+    層級     int           NOT NULL,
+    來源     sysname       NOT NULL,
+    標題     nvarchar(40)  NOT NULL,
+    排序     nvarchar(200) NULL,
+    CONSTRAINT PK_報表層級 PRIMARY KEY (功能代碼, 層級)
+);
+IF OBJECT_ID(N'報表層級關聯') IS NULL
+CREATE TABLE 報表層級關聯 (         -- 下一層以 上層列的欄位值 篩選本層欄位
+    功能代碼 nvarchar(20) NOT NULL,
+    層級     int          NOT NULL,
+    上層欄位 sysname      NOT NULL,
+    本層欄位 sysname      NOT NULL,
+    CONSTRAINT PK_報表層級關聯 PRIMARY KEY (功能代碼, 層級, 本層欄位)
+);
+IF OBJECT_ID(N'明細參照') IS NULL
+CREATE TABLE 明細參照 (             -- 單據建檔時可瀏覽來源並勾選帶入明細
+    功能代碼 nvarchar(20) NOT NULL CONSTRAINT PK_明細參照 PRIMARY KEY,
+    來源     sysname      NOT NULL,
+    標題     nvarchar(40) NOT NULL
+);
+IF OBJECT_ID(N'明細參照欄位') IS NULL
+CREATE TABLE 明細參照欄位 (         -- 表頭：以表頭值篩選來源並回填空白表頭；明細：來源欄位 → 明細欄位
+    功能代碼 nvarchar(20) NOT NULL,
+    位置     nvarchar(4)  NOT NULL CONSTRAINT CK_明細參照欄位_位置 CHECK (位置 IN (N'表頭', N'明細')),
+    來源欄位 sysname      NOT NULL,
+    目標欄位 sysname      NOT NULL,
+    CONSTRAINT PK_明細參照欄位 PRIMARY KEY (功能代碼, 位置, 目標欄位)
+);
+GO
 DELETE 功能表;
 INSERT 功能表 (功能代碼, 模組, 模組名稱, 分類, 功能名稱, 類型, 主檔, 明細檔, 明細唯讀, 單號前綴, 排序) VALUES
  (N'SD01', N'SD', N'SD訂單模組', N'組織架構', N'銷售組織維護', N'維護', N'銷售組織維護', NULL, 0, NULL, 101),
@@ -42,3 +75,26 @@ INSERT 欄位設定 (表名, 欄位名) VALUES
  (N'廠商採購明細', N'收貨數量'), (N'廠商採購明細', N'退回數量'),
  (N'生產工單主檔', N'入庫數量'),
  (N'生產工單明細', N'應領用量'), (N'生產工單明細', N'已領用量');
+
+DELETE 報表層級;
+INSERT 報表層級 (功能代碼, 層級, 來源, 標題, 排序) VALUES
+ (N'IM07', 1, N'物料資料維護', N'物料資料維護', N'[物料編號]'),
+ (N'IM07', 2, N'每日庫存餘額', N'每日庫存餘額', N'[倉庫代碼], [餘額日期]'),
+ (N'IM07', 3, N'庫存異動明細', N'庫存異動明細', N'[異動序號]');
+DELETE 報表層級關聯;
+INSERT 報表層級關聯 (功能代碼, 層級, 上層欄位, 本層欄位) VALUES
+ (N'IM07', 2, N'物料編號', N'物料編號'),
+ (N'IM07', 3, N'物料編號', N'物料編號'), (N'IM07', 3, N'倉庫代碼', N'倉庫代碼'), (N'IM07', 3, N'餘額日期', N'異動日期');
+
+DELETE 明細參照;
+INSERT 明細參照 (功能代碼, 來源, 標題) VALUES
+ (N'SD04', N'已訂未出明細', N'已訂未出明細'),
+ (N'MM04', N'已採未交明細', N'已採未交明細');
+DELETE 明細參照欄位;
+INSERT 明細參照欄位 (功能代碼, 位置, 來源欄位, 目標欄位) VALUES
+ (N'SD04', N'表頭', N'客戶編號', N'客戶編號'), (N'SD04', N'表頭', N'銷售組織', N'銷售組織'),
+ (N'SD04', N'明細', N'訂單編號', N'訂單編號'), (N'SD04', N'明細', N'訂單項次', N'訂單項次'),
+ (N'SD04', N'明細', N'物料編號', N'物料編號'), (N'SD04', N'明細', N'未出數量', N'出貨數量'),
+ (N'MM04', N'表頭', N'廠商編號', N'廠商編號'), (N'MM04', N'表頭', N'採購組織', N'採購組織'),
+ (N'MM04', N'明細', N'採購編號', N'採購編號'), (N'MM04', N'明細', N'採購項次', N'採購項次'),
+ (N'MM04', N'明細', N'物料編號', N'物料編號'), (N'MM04', N'明細', N'未交數量', N'收貨數量');

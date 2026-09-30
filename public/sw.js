@@ -1,6 +1,6 @@
 // 所有 GET（畫面檔與查詢 API，含外部後端）：網路優先，成功即更新快取；離線時回快取。
 // 寫入（POST）不經快取，由 app.js 的待傳佇列負責斷線重傳。
-const CACHE = 'erp-v3';
+const CACHE = 'erp-v4';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'env.js', 'manifest.webmanifest', 'icon.svg'];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(
