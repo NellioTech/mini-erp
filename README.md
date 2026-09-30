@@ -4,6 +4,10 @@ Repo：https://github.com/NellioTech/mini-erp ・ 版本：[v0.1.0](https://gith
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/NellioTech/mini-erp)
 
+## GitHub Pages（前端）
+網址：https://nelliotech.github.io/mini-erp/ （Settings → Pages → Deploy from a branch → `main` / `(root)`）
+Pages 只能放靜態檔，資料仍由 Render 上的 Node 後端提供：`public/env.js` 設定後端網址，`server.js` 以 CORS 允許 `https://nelliotech.github.io`。
+
 ## 線上部署（Render）
 1. 點上方按鈕，以 GitHub 帳號登入 Render，選擇 `NellioTech/mini-erp`。
 2. 輸入 `DB_USER`、`DB_PASSWORD` 後按 Apply，約 2–3 分鐘完成，取得 `https://mini-erp-xxxx.onrender.com`。

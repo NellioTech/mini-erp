@@ -19,6 +19,7 @@ npm test        # sp_驗證：過帳累加、每日庫存餘額、每日供需�
 ```
 
 ## 交付
+前端靜態檔另由 GitHub Pages（main / root）發佈，後端網址見 `public/env.js`。
 線上部署由 `render.yaml`（Render）處理，push main 即自動部署；不要把帳密寫進 render.yaml。
 Repo：https://github.com/NellioTech/mini-erp（公開）。版本以 git tag `vX.Y.Z` 標記。
 每完成一個段落：更新 README.md / CLAUDE.md / SKILL.md / AGENT.md → commit → push GitHub → 回報 repo 與 release 連結。

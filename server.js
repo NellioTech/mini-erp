@@ -29,6 +29,15 @@ async function handle(res, proc, params) {
   }
 }
 
+// 允許 GitHub Pages 上的前端呼叫本 API
+const CORS = (process.env.CORS_ORIGIN || 'https://nelliotech.github.io').split(',');
+app.use('/api', (req, res, next) => {
+  if (CORS.includes(req.headers.origin)) {
+    res.set({ 'Access-Control-Allow-Origin': req.headers.origin, 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'GET,POST' });
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 app.use(express.json({ limit: '2mb' }));
 app.get('/api/:proc', (req, res) => handle(res, req.params.proc, req.query));
 app.post('/api/:proc', (req, res) => handle(res, req.params.proc, req.body || {}));

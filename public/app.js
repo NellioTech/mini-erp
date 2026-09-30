@@ -13,13 +13,13 @@ function toast(msg, cls = '') {
 
 /* ---------- API ---------- */
 async function get(proc, params = {}) {
-  const r = await fetch(`/api/${proc}?` + new URLSearchParams(params));
-  const j = await r.json();
+  const r = await fetch(`${window.ERP_API || ''}/api/${proc}?` + new URLSearchParams(params));
+  const j = await r.json().catch(() => { throw new Error(`無法連線到後端 API（${window.ERP_API || location.origin}），請確認後端服務已啟動`); });
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
 }
 async function post(proc, params) {
-  const r = await fetch(`/api/${proc}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
+  const r = await fetch(`${window.ERP_API || ''}/api/${proc}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
   const j = await r.json().catch(() => ({ error: '伺服器回應格式錯誤' }));
   if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), { status: r.status });
   return j;
